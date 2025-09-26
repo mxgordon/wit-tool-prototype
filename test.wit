@@ -1,0 +1,18 @@
+interface printer {
+    print: func(text: string);
+}
+
+interface error-reporter {
+    report-error: func(error-message: string);
+}
+
+world multi-function-device {
+    // The component implements the `printer` interface
+    export printer;
+
+    // The component implements the `scan` function
+    export scan: func() -> list<u8>;
+
+    // The component needs to be supplied with an `error-reporter`
+    import error-reporter;
+}
