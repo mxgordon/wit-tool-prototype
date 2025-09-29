@@ -1,7 +1,6 @@
-use std::fmt::Display;
 use std::fs::read_to_string;
 use std::path::PathBuf;
-use clap::{arg, Args, ValueEnum};
+use clap::{arg, Args};
 use clap::{Parser, Subcommand};
 use tree_sitter::{Parser as TreeSitterParser, Query, QueryCursor, StreamingIterator, Tree};
 
@@ -27,16 +26,6 @@ struct QueryArgs {
     query: String,
 }
 
-// impl Display for Commands {
-//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-//         write!(f, "{}", match self {
-//             Commands::AST => "ast",
-//             Commands::JSON => "json",
-//             Commands::Query(..) => "query"
-//         })
-//     }
-// }
-
 fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
     let query = Query::new(&tree_sitter_wit::language(), args.query.as_str()).expect("Query failed"); //TODO throw clap error
 
@@ -45,18 +34,14 @@ fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
     let all_matches = query_cursor.matches(&query, tree.root_node(), file_data.as_bytes());
 
     all_matches.for_each(|match_| {
-        match_.captures
+        for capture in match_.captures {
+            println!("{:?}", capture);
+        }
     });
-
-    // for each_match in ) {
-    //     println!("{:?}", each_match);
-    // }
 }
 
 fn main() {
     let cli = Cli::parse();
-
-
 
     let file_data = read_to_string(cli.file_path).unwrap();
 
@@ -71,6 +56,4 @@ fn main() {
         Commands::JSON => {todo!()}
         Commands::Query(query_args) => {handle_query(query_args, tree, file_data)}
     }
-
-    // print!("{:?}", tree);
 }
