@@ -27,7 +27,7 @@ struct QueryArgs {
 }
 
 fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
-    let query = Query::new(&tree_sitter_wit::language(), args.query.as_str()).expect("Query failed"); //TODO throw clap error
+    let query = Query::new(&tree_sitter_wit::language(), args.query.trim()).unwrap(); //TODO throw clap error
 
     let mut query_cursor = QueryCursor::new();
 
@@ -35,7 +35,7 @@ fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
 
     all_matches.for_each(|match_| {
         for capture in match_.captures {
-            println!("{:?}", capture);
+            println!("Found {:?} at {:?}", file_data.get(capture.node.byte_range()).unwrap(), capture.node.byte_range());
         }
     });
 }
