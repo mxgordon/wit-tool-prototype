@@ -3,42 +3,60 @@ use std::fs::read_to_string;
 use std::path::PathBuf;
 use clap::{arg, Args, ValueEnum};
 use clap::{Parser, Subcommand};
-use tree_sitter::Parser as TreeSitterParser;
+use tree_sitter::{Parser as TreeSitterParser, Query, QueryCursor, StreamingIterator, Tree};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
 struct Cli {
+    #[command(subcommand)]
+    command: Commands,
+
     #[arg(value_name = "FILE")]
     file_path: PathBuf,
-
-    #[arg(default_value_t = Commands::AST)]
-    command: Commands,
 }
 
-#[derive(Subcommand, Debug, Clone, PartialEq, Eq, ValueEnum)]
+#[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
 enum Commands {
     AST,
     JSON,
-    Query
+    Query(QueryArgs)
 }
 
-// #[derive(Args, Debug, Clone, PartialEq, Eq)]
-// struct QueryArgs {
-//     query: String,
+#[derive(Args, Debug, Clone, PartialEq, Eq)]
+struct QueryArgs {
+    query: String,
+}
+
+// impl Display for Commands {
+//     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+//         write!(f, "{}", match self {
+//             Commands::AST => "ast",
+//             Commands::JSON => "json",
+//             Commands::Query(..) => "query"
+//         })
+//     }
 // }
 
-impl Display for Commands {
-    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Commands::AST => "ast",
-            Commands::JSON => "json",
-            Commands::Query => "query"
-        })
-    }
+fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
+    let query = Query::new(&tree_sitter_wit::language(), args.query.as_str()).expect("Query failed"); //TODO throw clap error
+
+    let mut query_cursor = QueryCursor::new();
+
+    let all_matches = query_cursor.matches(&query, tree.root_node(), file_data.as_bytes());
+
+    all_matches.for_each(|match_| {
+        match_.captures
+    });
+
+    // for each_match in ) {
+    //     println!("{:?}", each_match);
+    // }
 }
 
 fn main() {
     let cli = Cli::parse();
+
+
 
     let file_data = read_to_string(cli.file_path).unwrap();
 
@@ -48,5 +66,11 @@ fn main() {
 
     let tree = parser.parse(file_data.as_str(), None).unwrap();
 
-    print!("{:?}", tree);
+    match cli.command {
+        Commands::AST => {todo!()}
+        Commands::JSON => {todo!()}
+        Commands::Query(query_args) => {handle_query(query_args, tree, file_data)}
+    }
+
+    // print!("{:?}", tree);
 }
