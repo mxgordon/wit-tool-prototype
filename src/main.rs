@@ -4,6 +4,10 @@ use std::path::PathBuf;
 use clap::{arg, ValueEnum};
 use clap::{Parser, Subcommand};
 use tree_sitter::Parser as TreeSitterParser;
+use serde_json;
+use std::fs::File;
+use std::io::Write;
+mod tree_to_json;
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -72,7 +76,53 @@ fn main() {
             println!("{:?}", tree);
         }
         Commands::JSON => {
-            println!("Not implemented yet");
+            let mut cursor = tree.walk();
+            let mut file = File::create("test.json").expect("Failed to create file");
+            let mut json_string = String::new();
+            let mut intfs = vec![];
+            let mut wrlds = vec![];
+
+            'all: loop {
+                let node = cursor.node();
+                // let start_byte = node.start_byte();
+                // let end_byte = node.end_byte();
+                // let node_text = &(file_data.as_str())[start_byte..end_byte];
+                //println!("{:indent$}Node Type: {:?}, {:?}", "", node.kind(), node_text, indent = depth * 2);
+
+                if node.kind() == "interface_item" {
+                    let intf = tree_to_json::parse_interface(&(file_data.as_str()), node);
+                    intfs.push(intf);
+                    //let intf_json = serde_json::to_string_pretty(&intf).unwrap();
+
+                    //json_string += &(intf_json + "\n");
+                }
+
+                // Try to go to the first child
+                if cursor.goto_first_child() {
+                    continue;
+                }
+
+                if cursor.goto_next_sibling() {
+                    continue;
+                }
+
+                loop {
+                    if !cursor.goto_parent() {
+                        break 'all;
+                    }
+
+                    if cursor.goto_next_sibling() {
+                        break;
+                    }
+                }
+            }
+
+            let wit_file = tree_to_json::WitFile {
+                interfaces: intfs,
+                worlds: wrlds
+            };
+            let json_string = serde_json::to_string_pretty(&wit_file).unwrap();
+            file.write_all(json_string.as_bytes()).expect("Failed to write to file");
         }
         Commands::Query => {
             println!("Not implemented yet");

@@ -1,0 +1,35 @@
+{
+  "interfaces": [
+    {
+      "name": "printer",
+      "functions": [
+        {
+          "name": "print",
+          "parameters": [
+            {
+              "name": "text",
+              "type_": "string"
+            }
+          ],
+          "returns": null
+        }
+      ]
+    },
+    {
+      "name": "error-reporter",
+      "functions": [
+        {
+          "name": "report-error",
+          "parameters": [
+            {
+              "name": "error-message",
+              "type_": "string"
+            }
+          ],
+          "returns": null
+        }
+      ]
+    }
+  ],
+  "worlds": []
+}
