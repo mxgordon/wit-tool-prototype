@@ -43,6 +43,29 @@ impl Display for Commands {
     }
 }
 
+fn handle_tokens(tree: &tree_sitter::Tree, file_data: &str) {
+    // get root node of parsed tree
+    let root_node = tree.root_node();
+    let mut cursor = root_node.walk();
+
+    // iterate over all named nodes in tree
+    println!("Tokens:");
+    let mut stack = vec![(root_node, 0)];
+    while let Some((node, _depth)) = stack.pop() {
+        if node.is_named() {
+            println!("-----------------------------------------------");
+            println!("Kind: {}", node.kind());
+            println!("Text:\n{}\n", &file_data[node.byte_range()]);
+        }
+        // push children to stack for more traversal
+        let mut child_cursor = node.walk();
+        for child in node.children(&mut child_cursor) {
+            stack.push((child, _depth + 1));
+        }
+    }
+    println!("-----------------------------------------------");
+}
+
 fn main() {
     let cli = Cli::parse();
 
@@ -56,21 +79,7 @@ fn main() {
 
     match cli.command {
         Commands::Tokens => {
-            // get root node of parsed tree
-            let root_node = tree.root_node();
-
-            // create cursor to traverse tree
-            let mut cursor = root_node.walk();
-
-            //iterate over all named children of root node (only top-level)
-            for node in root_node.named_children(&mut cursor) {
-                // print node kind and text
-                println!(
-                    "Token: {}, Text: {}",
-                    node.kind(),
-                    &file_data[node.byte_range()]
-                );
-            }
+            handle_tokens(&tree, &file_data);
         }
         Commands::AST => {
             println!("{:?}", tree);
