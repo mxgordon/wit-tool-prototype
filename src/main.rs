@@ -22,13 +22,18 @@ struct Cli {
 enum Commands {
     Tokens,
     AST,
-    JSON,
+    JSON(JSONArgs),
     Query(QueryArgs)
 }
 
 #[derive(Args, Debug, Clone, PartialEq, Eq)]
 struct QueryArgs {
     query: String,
+}
+
+#[derive(Args, Debug, Clone, PartialEq, Eq)]
+struct JSONArgs {
+    json_file_name: String,
 }
 
 fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
@@ -66,26 +71,18 @@ fn handle_tokens(tree: Tree, file_data: String) {
     }
 }
 
-fn handle_json(tree: Tree, file_data: String) {
+fn handle_json(json_args: JSONArgs, tree: Tree, file_data: String) {
     let mut cursor = tree.walk();
-    let mut file = File::create("test.json").expect("Failed to create file");
-    let mut json_string = String::new();
-    let mut intfs = vec![];
-    let mut wrlds = vec![];
+    let mut file = File::create(json_args.json_file_name).expect("Failed to create file");
+
+    let mut interfaces = vec![];
+    let mut worlds = vec![];
 
     'all: loop {
         let node = cursor.node();
-        // let start_byte = node.start_byte();
-        // let end_byte = node.end_byte();
-        // let node_text = &(file_data.as_str())[start_byte..end_byte];
-        //println!("{:indent$}Node Type: {:?}, {:?}", "", node.kind(), node_text, indent = depth * 2);
-
         if node.kind() == "interface_item" {
-            let intf = tree_to_json::parse_interface(&(file_data.as_str()), node);
-            intfs.push(intf);
-            //let intf_json = serde_json::to_string_pretty(&intf).unwrap();
-
-            //json_string += &(intf_json + "\n");
+            let intf = tree_to_json::parse_interface(file_data.as_str(), node);
+            interfaces.push(intf);
         }
 
         // Try to go to the first child
@@ -97,6 +94,7 @@ fn handle_json(tree: Tree, file_data: String) {
             continue;
         }
 
+        // Go back to the parent, then move to the next sibling
         loop {
             if !cursor.goto_parent() {
                 break 'all;
@@ -109,8 +107,8 @@ fn handle_json(tree: Tree, file_data: String) {
     }
 
     let wit_file = tree_to_json::WitFile {
-        interfaces: intfs,
-        worlds: wrlds
+        interfaces,
+        worlds
     };
     let json_string = serde_json::to_string_pretty(&wit_file).unwrap();
     file.write_all(json_string.as_bytes()).expect("Failed to write to file");
@@ -131,7 +129,7 @@ fn main() {
     match cli.command {
         Commands::Tokens => handle_tokens(tree, file_data),
         Commands::AST => println!("{:?}", tree),
-        Commands::JSON => handle_json(tree, file_data),
+        Commands::JSON(json_args) => handle_json(json_args, tree, file_data),
         Commands::Query(query_args) => {handle_query(query_args, tree, file_data)}
     }
 }
