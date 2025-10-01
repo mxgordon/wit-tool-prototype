@@ -32,12 +32,15 @@ struct QueryArgs {
 }
 
 fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
-    let query = Query::new(&tree_sitter_wit::language(), args.query.trim()).unwrap(); //TODO throw clap error
+    // Create a treesitter query using the query syntax from treesitter
+    let query = Query::new(&tree_sitter_wit::language(), args.query.trim()).unwrap(); //TODO throw clap error if query fails to parse
 
     let mut query_cursor = QueryCursor::new();
 
+    // Run the query on the tree
     let all_matches = query_cursor.matches(&query, tree.root_node(), file_data.as_bytes());
 
+    // Print the section of the WIT file it matched and the location
     all_matches.for_each(|match_| {
         for capture in match_.captures {
             println!("Found {:?} at {:?}", file_data.get(capture.node.byte_range()).unwrap(), capture.node.byte_range());
@@ -114,16 +117,17 @@ fn handle_json(tree: Tree, file_data: String) {
 }
 
 fn main() {
+    // Parse CLI input from user
     let cli = Cli::parse();
 
     let file_data = read_to_string(cli.file_path).unwrap();
 
+    // Create treesitter parser and parse WIT file
     let mut parser = TreeSitterParser::new();
-
     parser.set_language(&tree_sitter_wit::language()).expect("Set language failed");
-
     let tree = parser.parse(file_data.as_str(), None).unwrap();
 
+    // Based on user input, run appropriate function
     match cli.command {
         Commands::Tokens => handle_tokens(tree, file_data),
         Commands::AST => println!("{:?}", tree),
