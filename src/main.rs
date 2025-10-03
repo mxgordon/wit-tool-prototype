@@ -1,12 +1,13 @@
+use clap::{Args, arg};
+use clap::{Parser, Subcommand};
+use serde::Serialize;
+use std::fmt::Display;
+use std::fs::File;
 use std::fs::read_to_string;
 use std::path::PathBuf;
-use clap::{arg, Args};
-use clap::{Parser, Subcommand};
-use tree_sitter::{Parser as TreeSitterParser, Query, QueryCursor, StreamingIterator, Tree};
-use std::fs::File;
-use std::io::Write;
-
-mod tree_to_json;
+use tree_sitter::{
+    Node, Parser as TreeSitterParser, Point, Query, QueryCursor, StreamingIterator, Tree,
+};
 
 #[derive(Parser, Debug)]
 #[command(version, about, long_about = None)]
@@ -23,7 +24,7 @@ enum Commands {
     Tokens,
     AST,
     JSON(JSONArgs),
-    Query(QueryArgs)
+    Query(QueryArgs),
 }
 
 #[derive(Args, Debug, Clone, PartialEq, Eq)]
@@ -48,7 +49,11 @@ fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
     // Print the section of the WIT file it matched and the location
     all_matches.for_each(|match_| {
         for capture in match_.captures {
-            println!("Found {:?} at {:?}", file_data.get(capture.node.byte_range()).unwrap(), capture.node.byte_range());
+            println!(
+                "Found {:?} at {:?}",
+                file_data.get(capture.node.byte_range()).unwrap(),
+                capture.node.byte_range()
+            );
         }
     });
 }
@@ -71,47 +76,66 @@ fn handle_tokens(tree: Tree, file_data: String) {
     }
 }
 
-fn handle_json(json_args: JSONArgs, tree: Tree, file_data: String) {
-    let mut cursor = tree.walk();
-    let mut file = File::create(json_args.json_file_name).expect("Failed to create file");
+#[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
+pub struct Position {
+    pub row: usize,
+    pub column: usize,
+}
 
-    let mut interfaces = vec![];
-    let mut worlds = vec![];
+impl Display for Position {
+    fn fmt(&self, f: &mut std::fmt::Formatter) -> Result<(), std::fmt::Error> {
+        write!(f, "({},{})", self.row, self.column)
+    }
+}
 
-    'all: loop {
-        let node = cursor.node();
-        if node.kind() == "interface_item" {
-            let intf = tree_to_json::parse_interface(file_data.as_str(), node);
-            interfaces.push(intf);
-        }
-
-        // Try to go to the first child
-        if cursor.goto_first_child() {
-            continue;
-        }
-
-        if cursor.goto_next_sibling() {
-            continue;
-        }
-
-        // Go back to the parent, then move to the next sibling
-        loop {
-            if !cursor.goto_parent() {
-                break 'all;
-            }
-
-            if cursor.goto_next_sibling() {
-                break;
-            }
+impl From<Point> for Position {
+    fn from(point: Point) -> Self {
+        Self {
+            row: point.row + 1,
+            column: point.column + 1,
         }
     }
+}
 
-    let wit_file = tree_to_json::WitFile {
-        interfaces,
-        worlds
-    };
-    let json_string = serde_json::to_string_pretty(&wit_file).unwrap();
-    file.write_all(json_string.as_bytes()).expect("Failed to write to file");
+#[derive(Serialize)]
+pub struct SyntaxNode {
+    pub kind: String,
+    pub text: String,
+    pub children: Vec<SyntaxNode>,
+}
+
+impl SyntaxNode {
+    fn from_node(node: Node, file_data: String) -> Self {
+        let mut walker = node.walk();
+        // convert all the child node to SyntaxNodes
+        let children: Vec<SyntaxNode> = node
+            .children(&mut walker)
+            .map(|n| SyntaxNode::from_node(n, file_data.clone()))
+            .collect();
+
+        // Filter out the children that are just syntax tokens
+        let important_children = children
+            .into_iter()
+            .filter(|child| {
+                !vec!["{", "}", ":", "//", ";", "<", ">", "->", "(", ")"].contains(&&*child.kind)
+            })
+            .collect();
+
+        Self {
+            kind: node.kind().into(),
+            text: file_data.get(node.byte_range()).unwrap().to_string(),
+            children: important_children,
+        }
+    }
+}
+
+fn handle_json(json_args: JSONArgs, tree: Tree, file_data: String) {
+    let mut file = File::create(json_args.json_file_name).expect("Failed to create file");
+
+    let root: SyntaxNode = SyntaxNode::from_node(tree.root_node(), file_data.clone());
+
+    // Pretty print the JSON file
+    serde_json::to_writer_pretty(&mut file, &root).unwrap();
 }
 
 fn main() {
@@ -122,7 +146,9 @@ fn main() {
 
     // Create treesitter parser and parse WIT file
     let mut parser = TreeSitterParser::new();
-    parser.set_language(&tree_sitter_wit::language()).expect("Set language failed");
+    parser
+        .set_language(&tree_sitter_wit::language())
+        .expect("Set language failed");
     let tree = parser.parse(file_data.as_str(), None).unwrap();
 
     // Based on user input, run appropriate function
@@ -130,6 +156,6 @@ fn main() {
         Commands::Tokens => handle_tokens(tree, file_data),
         Commands::AST => println!("{:?}", tree),
         Commands::JSON(json_args) => handle_json(json_args, tree, file_data),
-        Commands::Query(query_args) => {handle_query(query_args, tree, file_data)}
+        Commands::Query(query_args) => handle_query(query_args, tree, file_data),
     }
 }
