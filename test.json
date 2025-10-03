@@ -1,35 +1,334 @@
 {
-  "interfaces": [
+  "kind": "source_file",
+  "text": "interface printer {\r\n    print: func(text: string);\r\n}\r\n\r\ninterface error-reporter {\r\n    report-error: func(error-message: string);\r\n}\r\n\r\nworld multi-function-device {\r\n    // The component implements the `printer` interface\r\n    export printer;\r\n\r\n    // The component implements the `scan` function\r\n    export scan: func() -> list<u8>;\r\n\r\n    // The component needs to be supplied with an `error-reporter`\r\n    import error-reporter;\r\n}",
+  "children": [
     {
-      "name": "printer",
-      "functions": [
+      "kind": "top_level_item",
+      "text": "interface printer {\r\n    print: func(text: string);\r\n}",
+      "children": [
         {
-          "name": "print",
-          "parameters": [
+          "kind": "interface_item",
+          "text": "interface printer {\r\n    print: func(text: string);\r\n}",
+          "children": [
             {
-              "name": "text",
-              "type_": "string"
+              "kind": "interface",
+              "text": "interface",
+              "children": []
+            },
+            {
+              "kind": "identifier",
+              "text": "printer",
+              "children": []
+            },
+            {
+              "kind": "interface_items",
+              "text": "print: func(text: string);",
+              "children": [
+                {
+                  "kind": "func_item",
+                  "text": "print: func(text: string);",
+                  "children": [
+                    {
+                      "kind": "identifier",
+                      "text": "print",
+                      "children": []
+                    },
+                    {
+                      "kind": "func_type",
+                      "text": "func(text: string)",
+                      "children": [
+                        {
+                          "kind": "func",
+                          "text": "func",
+                          "children": []
+                        },
+                        {
+                          "kind": "param_list",
+                          "text": "(text: string)",
+                          "children": [
+                            {
+                              "kind": "named_type",
+                              "text": "text: string",
+                              "children": [
+                                {
+                                  "kind": "identifier",
+                                  "text": "text",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "ty",
+                                  "text": "string",
+                                  "children": [
+                                    {
+                                      "kind": "builtins",
+                                      "text": "string",
+                                      "children": [
+                                        {
+                                          "kind": "string",
+                                          "text": "string",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
-          ],
-          "returns": null
+          ]
         }
       ]
     },
     {
-      "name": "error-reporter",
-      "functions": [
+      "kind": "top_level_item",
+      "text": "interface error-reporter {\r\n    report-error: func(error-message: string);\r\n}",
+      "children": [
         {
-          "name": "report-error",
-          "parameters": [
+          "kind": "interface_item",
+          "text": "interface error-reporter {\r\n    report-error: func(error-message: string);\r\n}",
+          "children": [
             {
-              "name": "error-message",
-              "type_": "string"
+              "kind": "interface",
+              "text": "interface",
+              "children": []
+            },
+            {
+              "kind": "identifier",
+              "text": "error-reporter",
+              "children": []
+            },
+            {
+              "kind": "interface_items",
+              "text": "report-error: func(error-message: string);",
+              "children": [
+                {
+                  "kind": "func_item",
+                  "text": "report-error: func(error-message: string);",
+                  "children": [
+                    {
+                      "kind": "identifier",
+                      "text": "report-error",
+                      "children": []
+                    },
+                    {
+                      "kind": "func_type",
+                      "text": "func(error-message: string)",
+                      "children": [
+                        {
+                          "kind": "func",
+                          "text": "func",
+                          "children": []
+                        },
+                        {
+                          "kind": "param_list",
+                          "text": "(error-message: string)",
+                          "children": [
+                            {
+                              "kind": "named_type",
+                              "text": "error-message: string",
+                              "children": [
+                                {
+                                  "kind": "identifier",
+                                  "text": "error-message",
+                                  "children": []
+                                },
+                                {
+                                  "kind": "ty",
+                                  "text": "string",
+                                  "children": [
+                                    {
+                                      "kind": "builtins",
+                                      "text": "string",
+                                      "children": [
+                                        {
+                                          "kind": "string",
+                                          "text": "string",
+                                          "children": []
+                                        }
+                                      ]
+                                    }
+                                  ]
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
             }
-          ],
-          "returns": null
+          ]
+        }
+      ]
+    },
+    {
+      "kind": "top_level_item",
+      "text": "world multi-function-device {\r\n    // The component implements the `printer` interface\r\n    export printer;\r\n\r\n    // The component implements the `scan` function\r\n    export scan: func() -> list<u8>;\r\n\r\n    // The component needs to be supplied with an `error-reporter`\r\n    import error-reporter;\r\n}",
+      "children": [
+        {
+          "kind": "world_item",
+          "text": "world multi-function-device {\r\n    // The component implements the `printer` interface\r\n    export printer;\r\n\r\n    // The component implements the `scan` function\r\n    export scan: func() -> list<u8>;\r\n\r\n    // The component needs to be supplied with an `error-reporter`\r\n    import error-reporter;\r\n}",
+          "children": [
+            {
+              "kind": "world",
+              "text": "world",
+              "children": []
+            },
+            {
+              "kind": "identifier",
+              "text": "multi-function-device",
+              "children": []
+            },
+            {
+              "kind": "slash_comment",
+              "text": "// The component implements the `printer` interface\r",
+              "children": []
+            },
+            {
+              "kind": "ERROR",
+              "text": "export printer;",
+              "children": [
+                {
+                  "kind": "export",
+                  "text": "export",
+                  "children": []
+                },
+                {
+                  "kind": "identifier",
+                  "text": "printer",
+                  "children": []
+                }
+              ]
+            },
+            {
+              "kind": "slash_comment",
+              "text": "// The component implements the `scan` function\r",
+              "children": []
+            },
+            {
+              "kind": "world_items",
+              "text": "export scan: func() -> list<u8>;",
+              "children": [
+                {
+                  "kind": "export_item",
+                  "text": "export scan: func() -> list<u8>;",
+                  "children": [
+                    {
+                      "kind": "exported_path",
+                      "text": "export scan: func() -> list<u8>;",
+                      "children": [
+                        {
+                          "kind": "export",
+                          "text": "export",
+                          "children": []
+                        },
+                        {
+                          "kind": "fully_qualified_use_path",
+                          "text": "scan: func",
+                          "children": [
+                            {
+                              "kind": "package_name",
+                              "text": "scan",
+                              "children": [
+                                {
+                                  "kind": "identifier",
+                                  "text": "scan",
+                                  "children": []
+                                }
+                              ]
+                            },
+                            {
+                              "kind": "package_path",
+                              "text": "func",
+                              "children": [
+                                {
+                                  "kind": "identifier",
+                                  "text": "func",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        },
+                        {
+                          "kind": "ERROR",
+                          "text": "() -> list<u8>",
+                          "children": [
+                            {
+                              "kind": "list",
+                              "text": "list",
+                              "children": []
+                            },
+                            {
+                              "kind": "u8",
+                              "text": "u8",
+                              "children": []
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              "kind": "slash_comment",
+              "text": "// The component needs to be supplied with an `error-reporter`\r",
+              "children": []
+            },
+            {
+              "kind": "world_items",
+              "text": "import error-reporter;",
+              "children": [
+                {
+                  "kind": "import_item",
+                  "text": "import error-reporter;",
+                  "children": [
+                    {
+                      "kind": "imported_path",
+                      "text": "import error-reporter;",
+                      "children": [
+                        {
+                          "kind": "import",
+                          "text": "import",
+                          "children": []
+                        },
+                        {
+                          "kind": "use_path",
+                          "text": "error-reporter",
+                          "children": [
+                            {
+                              "kind": "local_use_path",
+                              "text": "error-reporter",
+                              "children": [
+                                {
+                                  "kind": "identifier",
+                                  "text": "error-reporter",
+                                  "children": []
+                                }
+                              ]
+                            }
+                          ]
+                        }
+                      ]
+                    }
+                  ]
+                }
+              ]
+            }
+          ]
         }
       ]
     }
-  ],
-  "worlds": []
+  ]
 }
