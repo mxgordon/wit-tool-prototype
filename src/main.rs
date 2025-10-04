@@ -95,7 +95,7 @@ fn main() {
                 //println!("{:indent$}Node Type: {:?}, {:?}", "", node.kind(), node_text, indent = depth * 2);
 
                 if node.kind() == "interface_item" {
-                    let intf = tree_to_json::parse_interface((file_data.as_str()), node);
+                    let intf = tree_to_json::parse_interface(file_data.as_str(), node);
                     intfs.push(intf);
                     //let intf_json = serde_json::to_string_pretty(&intf).unwrap();
 
