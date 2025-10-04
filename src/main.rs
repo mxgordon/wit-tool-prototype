@@ -1,12 +1,12 @@
-use std::fmt::Display;
-use std::fs::read_to_string;
-use std::path::PathBuf;
-use clap::{arg, ValueEnum};
 use clap::{Parser, Subcommand};
-use tree_sitter::Parser as TreeSitterParser;
+use clap::{ValueEnum, arg};
 use serde_json;
+use std::fmt::Display;
 use std::fs::File;
+use std::fs::read_to_string;
 use std::io::Write;
+use std::path::PathBuf;
+use tree_sitter::Parser as TreeSitterParser;
 mod tree_to_json;
 
 #[derive(Parser, Debug)]
@@ -24,7 +24,7 @@ enum Commands {
     Tokens,
     AST,
     JSON,
-    Query
+    Query,
 }
 
 // #[derive(Args, Debug, Clone, PartialEq, Eq)]
@@ -34,12 +34,16 @@ enum Commands {
 
 impl Display for Commands {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Commands::Tokens => "tokens",
-            Commands::AST => "ast",
-            Commands::JSON => "json",
-            Commands::Query => "query"
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Commands::Tokens => "tokens",
+                Commands::AST => "ast",
+                Commands::JSON => "json",
+                Commands::Query => "query",
+            }
+        )
     }
 }
 
@@ -50,7 +54,9 @@ fn main() {
 
     let mut parser = TreeSitterParser::new();
 
-    parser.set_language(&tree_sitter_wit::language()).expect("Set language failed");
+    parser
+        .set_language(&tree_sitter_wit::language())
+        .expect("Set language failed");
 
     let tree = parser.parse(file_data.as_str(), None).unwrap();
 
@@ -119,10 +125,11 @@ fn main() {
 
             let wit_file = tree_to_json::WitFile {
                 interfaces: intfs,
-                worlds: wrlds
+                worlds: wrlds,
             };
             let json_string = serde_json::to_string_pretty(&wit_file).unwrap();
-            file.write_all(json_string.as_bytes()).expect("Failed to write to file");
+            file.write_all(json_string.as_bytes())
+                .expect("Failed to write to file");
         }
         Commands::Query => {
             println!("Not implemented yet");
