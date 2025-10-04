@@ -1,6 +1,5 @@
 use clap::{Parser, Subcommand};
 use clap::{ValueEnum, arg};
-use serde_json;
 use std::fmt::Display;
 use std::fs::File;
 use std::fs::read_to_string;
@@ -84,9 +83,9 @@ fn main() {
         Commands::JSON => {
             let mut cursor = tree.walk();
             let mut file = File::create("test.json").expect("Failed to create file");
-            let mut json_string = String::new();
+            let json_string = String::new();
             let mut intfs = vec![];
-            let mut wrlds = vec![];
+            let wrlds = vec![];
 
             'all: loop {
                 let node = cursor.node();
@@ -96,7 +95,7 @@ fn main() {
                 //println!("{:indent$}Node Type: {:?}, {:?}", "", node.kind(), node_text, indent = depth * 2);
 
                 if node.kind() == "interface_item" {
-                    let intf = tree_to_json::parse_interface(&(file_data.as_str()), node);
+                    let intf = tree_to_json::parse_interface((file_data.as_str()), node);
                     intfs.push(intf);
                     //let intf_json = serde_json::to_string_pretty(&intf).unwrap();
 
