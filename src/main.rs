@@ -14,15 +14,15 @@ struct Cli {
     #[arg(value_name = "FILE")]
     file_path: PathBuf,
 
-    #[arg(default_value_t = Commands::AST)]
+    #[arg(default_value_t = Commands::Ast)]
     command: Commands,
 }
 
 #[derive(Subcommand, Debug, Clone, PartialEq, Eq, ValueEnum)]
 enum Commands {
     Tokens,
-    AST,
-    JSON,
+    Ast,
+    Json,
     Query,
 }
 
@@ -38,8 +38,8 @@ impl Display for Commands {
             "{}",
             match self {
                 Commands::Tokens => "tokens",
-                Commands::AST => "ast",
-                Commands::JSON => "json",
+                Commands::Ast => "ast",
+                Commands::Json => "json",
                 Commands::Query => "query",
             }
         )
@@ -77,13 +77,13 @@ fn main() {
                 );
             }
         }
-        Commands::AST => {
+        Commands::Ast => {
             println!("{:?}", tree);
         }
-        Commands::JSON => {
+        Commands::Json => {
             let mut cursor = tree.walk();
             let mut file = File::create("test.json").expect("Failed to create file");
-            let json_string = String::new();
+            let _json_string = String::new();
             let mut intfs = vec![];
             let wrlds = vec![];
 

@@ -22,6 +22,7 @@ pub struct Interface {
 
 #[derive(Serialize)]
 #[serde(untagged)]
+#[expect(dead_code)]
 enum WorldExport {
     Interface {
         interface: String,
