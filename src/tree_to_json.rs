@@ -22,9 +22,16 @@ pub struct Interface {
 
 #[derive(Serialize)]
 #[serde(untagged)]
+#[expect(dead_code)]
 enum WorldExport {
-    Interface { interface: String },
-    Function { function: String, parameters: Vec<Parameter>, returns: Option<String> },
+    Interface {
+        interface: String,
+    },
+    Function {
+        function: String,
+        parameters: Vec<Parameter>,
+        returns: Option<String>,
+    },
 }
 
 #[derive(Serialize)]
@@ -92,9 +99,9 @@ pub fn parse_parameter(doc: &str, param_node: Node) -> Vec<Parameter> {
         let type_text = get_text(doc, param_types[index]);
 
         //println!("{:?}, {:?}", name_text, type_text);
-        output.push(Parameter{
+        output.push(Parameter {
             name: name_text.to_string(),
-            type_: type_text.to_string()
+            type_: type_text.to_string(),
         });
     }
 
@@ -109,7 +116,7 @@ pub fn parse_function(doc: &str, func_node: Node) -> Function {
     Function {
         name: func_name,
         parameters: params,
-        returns: None
+        returns: None,
     }
 }
 
@@ -124,6 +131,6 @@ pub fn parse_interface(doc: &str, func_node: Node) -> Interface {
 
     Interface {
         name: interface_name,
-        functions: funcs
+        functions: funcs,
     }
 }

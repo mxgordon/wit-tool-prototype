@@ -1,12 +1,11 @@
-use std::fmt::Display;
-use std::fs::read_to_string;
-use std::path::PathBuf;
-use clap::{arg, ValueEnum};
 use clap::{Parser, Subcommand};
-use tree_sitter::Parser as TreeSitterParser;
-use serde_json;
+use clap::{ValueEnum, arg};
+use std::fmt::Display;
 use std::fs::File;
+use std::fs::read_to_string;
 use std::io::Write;
+use std::path::PathBuf;
+use tree_sitter::Parser as TreeSitterParser;
 mod tree_to_json;
 
 #[derive(Parser, Debug)]
@@ -15,16 +14,16 @@ struct Cli {
     #[arg(value_name = "FILE")]
     file_path: PathBuf,
 
-    #[arg(default_value_t = Commands::AST)]
+    #[arg(default_value_t = Commands::Ast)]
     command: Commands,
 }
 
 #[derive(Subcommand, Debug, Clone, PartialEq, Eq, ValueEnum)]
 enum Commands {
     Tokens,
-    AST,
-    JSON,
-    Query
+    Ast,
+    Json,
+    Query,
 }
 
 // #[derive(Args, Debug, Clone, PartialEq, Eq)]
@@ -34,12 +33,16 @@ enum Commands {
 
 impl Display for Commands {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "{}", match self {
-            Commands::Tokens => "tokens",
-            Commands::AST => "ast",
-            Commands::JSON => "json",
-            Commands::Query => "query"
-        })
+        write!(
+            f,
+            "{}",
+            match self {
+                Commands::Tokens => "tokens",
+                Commands::Ast => "ast",
+                Commands::Json => "json",
+                Commands::Query => "query",
+            }
+        )
     }
 }
 
@@ -50,7 +53,9 @@ fn main() {
 
     let mut parser = TreeSitterParser::new();
 
-    parser.set_language(&tree_sitter_wit::language()).expect("Set language failed");
+    parser
+        .set_language(&tree_sitter_wit::language())
+        .expect("Set language failed");
 
     let tree = parser.parse(file_data.as_str(), None).unwrap();
 
@@ -72,15 +77,15 @@ fn main() {
                 );
             }
         }
-        Commands::AST => {
+        Commands::Ast => {
             println!("{:?}", tree);
         }
-        Commands::JSON => {
+        Commands::Json => {
             let mut cursor = tree.walk();
             let mut file = File::create("test.json").expect("Failed to create file");
-            let mut json_string = String::new();
+            let _json_string = String::new();
             let mut intfs = vec![];
-            let mut wrlds = vec![];
+            let wrlds = vec![];
 
             'all: loop {
                 let node = cursor.node();
@@ -90,7 +95,7 @@ fn main() {
                 //println!("{:indent$}Node Type: {:?}, {:?}", "", node.kind(), node_text, indent = depth * 2);
 
                 if node.kind() == "interface_item" {
-                    let intf = tree_to_json::parse_interface(&(file_data.as_str()), node);
+                    let intf = tree_to_json::parse_interface(file_data.as_str(), node);
                     intfs.push(intf);
                     //let intf_json = serde_json::to_string_pretty(&intf).unwrap();
 
@@ -119,10 +124,11 @@ fn main() {
 
             let wit_file = tree_to_json::WitFile {
                 interfaces: intfs,
-                worlds: wrlds
+                worlds: wrlds,
             };
             let json_string = serde_json::to_string_pretty(&wit_file).unwrap();
-            file.write_all(json_string.as_bytes()).expect("Failed to write to file");
+            file.write_all(json_string.as_bytes())
+                .expect("Failed to write to file");
         }
         Commands::Query => {
             println!("Not implemented yet");
