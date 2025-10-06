@@ -73,14 +73,14 @@ fn handle_query(query_args: QueryArgs) -> Result<(), Box<dyn std::error::Error>>
     let all_matches = query_cursor.matches(&query, tree.root_node(), file_data.as_bytes());
 
     // Print the section of the WIT file it matched and the location
-    all_matches.for_each(|match_| {
-        for capture in match_.captures {
+    all_matches.for_each(|r#match| {
+        r#match.captures.iter().for_each(|capture| {
             println!(
                 "Found {:?} at {:?}",
                 file_data.get(capture.node.byte_range()).unwrap(), // unwrap because we know the byte range will always be within the file
                 capture.node.byte_range()
             );
-        }
+        })
     });
 
     Ok(())
