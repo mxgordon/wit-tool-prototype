@@ -171,7 +171,6 @@ fn handle_json(json_args: JSONArgs) {
     serde_json::to_writer_pretty(&mut file, &root).unwrap();
 }
 
-
 fn make_tree(file_data: &str) -> Tree {
     // Create treesitter parser and parse WIT file
     let mut parser = TreeSitterParser::new();
@@ -189,7 +188,10 @@ fn main() {
     // Based on user input, run the appropriate function
     match cli.command {
         Commands::Tokens(file_args) => handle_tokens(file_args),
-        Commands::Ast(file_args) => println!("{:?}", make_tree(&read_to_string(file_args.file_path).unwrap())),
+        Commands::Ast(file_args) => println!(
+            "{:?}",
+            make_tree(&read_to_string(file_args.file_path).unwrap())
+        ),
         Commands::Json(json_args) => handle_json(json_args),
         Commands::Query(query_args) => handle_query(query_args),
     }
