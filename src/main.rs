@@ -146,7 +146,7 @@ impl SyntaxNode {
         let important_children = children
             .into_iter()
             .filter(|child| {
-                !vec!["{", "}", ":", "//", ";", "<", ">", "->", "(", ")"].contains(&&*child.kind)
+                !["{", "}", ":", "//", ";", "<", ">", "->", "(", ")"].contains(&&*child.kind)
             })
             .collect();
 
