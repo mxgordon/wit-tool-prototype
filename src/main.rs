@@ -14,32 +14,57 @@ use tree_sitter::{
 struct Cli {
     #[command(subcommand)]
     command: Commands,
-
-    #[arg(value_name = "FILE")]
-    file_path: PathBuf,
 }
 
 #[derive(Subcommand, Debug, Clone, PartialEq, Eq)]
 enum Commands {
-    Tokens,
-    AST,
-    JSON(JSONArgs),
+    Tokens(FilePathArgs),
+    Ast(FilePathArgs),
+    Json(JSONArgs),
     Query(QueryArgs),
 }
 
 #[derive(Args, Debug, Clone, PartialEq, Eq)]
 struct QueryArgs {
+    #[arg(value_name = "FILE")]
+    file_path: PathBuf,
     query: String,
 }
 
 #[derive(Args, Debug, Clone, PartialEq, Eq)]
+struct FilePathArgs {
+    #[arg(value_name = "FILE")]
+    file_path: PathBuf,
+}
+
+#[derive(Args, Debug, Clone, PartialEq, Eq)]
 struct JSONArgs {
+    #[arg(value_name = "FILE")]
+    file_path: PathBuf,
     json_file_name: String,
 }
 
-fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
+impl Display for Commands {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{}",
+            match self {
+                Commands::Tokens(..) => "tokens",
+                Commands::Ast(..) => "ast",
+                Commands::Json(..) => "json",
+                Commands::Query(..) => "query",
+            }
+        )
+    }
+}
+
+fn handle_query(query_args: QueryArgs) {
+    let file_data = read_to_string(query_args.file_path).unwrap();
+
+    let tree = make_tree(&file_data);
     // Create a treesitter query using the query syntax from treesitter
-    let query = Query::new(&tree_sitter_wit::language(), args.query.trim()).unwrap(); //TODO throw clap error if query fails to parse
+    let query = Query::new(&tree_sitter_wit::language(), query_args.query.trim()).unwrap(); //TODO throw clap error if query fails to parse
 
     let mut query_cursor = QueryCursor::new();
 
@@ -58,7 +83,11 @@ fn handle_query(args: QueryArgs, tree: Tree, file_data: String) {
     });
 }
 
-fn handle_tokens(tree: Tree, file_data: String) {
+fn handle_tokens(file_args: FilePathArgs) {
+    let file_data = read_to_string(file_args.file_path).unwrap();
+
+    let tree = make_tree(&file_data);
+
     // get root node of parsed tree
     let root_node = tree.root_node();
 
@@ -129,7 +158,11 @@ impl SyntaxNode {
     }
 }
 
-fn handle_json(json_args: JSONArgs, tree: Tree, file_data: String) {
+fn handle_json(json_args: JSONArgs) {
+    let file_data = read_to_string(json_args.file_path).unwrap();
+
+    let tree = make_tree(&file_data);
+
     let mut file = File::create(json_args.json_file_name).expect("Failed to create file");
 
     let root: SyntaxNode = SyntaxNode::from_node(tree.root_node(), file_data.clone());
@@ -138,24 +171,26 @@ fn handle_json(json_args: JSONArgs, tree: Tree, file_data: String) {
     serde_json::to_writer_pretty(&mut file, &root).unwrap();
 }
 
-fn main() {
-    // Parse CLI input from user
-    let cli = Cli::parse();
 
-    let file_data = read_to_string(cli.file_path).unwrap();
-
+fn make_tree(file_data: &str) -> Tree {
     // Create treesitter parser and parse WIT file
     let mut parser = TreeSitterParser::new();
     parser
         .set_language(&tree_sitter_wit::language())
         .expect("Set language failed");
-    let tree = parser.parse(file_data.as_str(), None).unwrap();
 
-    // Based on user input, run appropriate function
+    parser.parse(file_data, None).unwrap()
+}
+
+fn main() {
+    // Parse CLI input from user
+    let cli = Cli::parse();
+
+    // Based on user input, run the appropriate function
     match cli.command {
-        Commands::Tokens => handle_tokens(tree, file_data),
-        Commands::AST => println!("{:?}", tree),
-        Commands::JSON(json_args) => handle_json(json_args, tree, file_data),
-        Commands::Query(query_args) => handle_query(query_args, tree, file_data),
+        Commands::Tokens(file_args) => handle_tokens(file_args),
+        Commands::Ast(file_args) => println!("{:?}", make_tree(&read_to_string(file_args.file_path).unwrap())),
+        Commands::Json(json_args) => handle_json(json_args),
+        Commands::Query(query_args) => handle_query(query_args),
     }
 }
