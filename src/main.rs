@@ -1,7 +1,8 @@
 use clap::{Args, arg};
 use clap::{Parser, Subcommand};
 use serde::Serialize;
-use std::fmt::Display;
+use std::fmt;
+use std::fmt::{Display, Formatter};
 use std::fs::File;
 use std::fs::read_to_string;
 use std::path::PathBuf;
@@ -59,12 +60,12 @@ impl Display for Commands {
     }
 }
 
-fn handle_query(query_args: QueryArgs) {
-    let file_data = read_to_string(query_args.file_path).unwrap();
+fn handle_query(query_args: QueryArgs) -> Result<(), Box<dyn std::error::Error>> {
+    let file_data = read_to_string(query_args.file_path)?;
 
-    let tree = make_tree(&file_data);
+    let tree = make_tree(&file_data)?;
     // Create a treesitter query using the query syntax from treesitter
-    let query = Query::new(&tree_sitter_wit::language(), query_args.query.trim()).unwrap(); //TODO throw clap error if query fails to parse
+    let query = Query::new(&tree_sitter_wit::language(), query_args.query.trim())?;
 
     let mut query_cursor = QueryCursor::new();
 
@@ -76,17 +77,19 @@ fn handle_query(query_args: QueryArgs) {
         for capture in match_.captures {
             println!(
                 "Found {:?} at {:?}",
-                file_data.get(capture.node.byte_range()).unwrap(),
+                file_data.get(capture.node.byte_range()).unwrap(), // unwrap because we know the byte range will always be within the file
                 capture.node.byte_range()
             );
         }
     });
+
+    Ok(())
 }
 
-fn handle_tokens(file_args: FilePathArgs) {
-    let file_data = read_to_string(file_args.file_path).unwrap();
+fn handle_tokens(file_args: FilePathArgs) -> Result<(), Box<dyn std::error::Error>> {
+    let file_data = read_to_string(file_args.file_path)?;
 
-    let tree = make_tree(&file_data);
+    let tree = make_tree(&file_data)?;
 
     // get root node of parsed tree
     let root_node = tree.root_node();
@@ -103,6 +106,8 @@ fn handle_tokens(file_args: FilePathArgs) {
             &file_data[node.byte_range()]
         );
     }
+
+    Ok(())
 }
 
 #[derive(Clone, Copy, Debug, PartialEq, Eq, Serialize)]
@@ -158,40 +163,57 @@ impl SyntaxNode {
     }
 }
 
-fn handle_json(json_args: JSONArgs) {
-    let file_data = read_to_string(json_args.file_path).unwrap();
+fn handle_json(json_args: JSONArgs) -> Result<(), Box<dyn std::error::Error>> {
+    let file_data = read_to_string(json_args.file_path)?;
 
-    let tree = make_tree(&file_data);
+    let tree = make_tree(&file_data)?;
 
-    let mut file = File::create(json_args.json_file_name).expect("Failed to create file");
+    let mut file = File::create(json_args.json_file_name)?;
 
     let root: SyntaxNode = SyntaxNode::from_node(tree.root_node(), file_data.clone());
 
     // Pretty print the JSON file
-    serde_json::to_writer_pretty(&mut file, &root).unwrap();
+    serde_json::to_writer_pretty(&mut file, &root)?;
+
+    Ok(())
 }
 
-fn make_tree(file_data: &str) -> Tree {
+#[derive(Debug, Clone)]
+struct ParseTreeError;
+
+impl Display for ParseTreeError {
+    fn fmt(&self, f: &mut Formatter) -> fmt::Result {
+        write!(f, "Unable to parse the language tree")
+    }
+}
+impl std::error::Error for ParseTreeError {}
+
+fn make_tree(file_data: &str) -> Result<Tree, Box<dyn std::error::Error>> {
     // Create treesitter parser and parse WIT file
     let mut parser = TreeSitterParser::new();
-    parser
-        .set_language(&tree_sitter_wit::language())
-        .expect("Set language failed");
+    parser.set_language(&tree_sitter_wit::language())?;
 
-    parser.parse(file_data, None).unwrap()
+    Ok(parser.parse(file_data, None).ok_or(ParseTreeError)?)
 }
 
-fn main() {
+fn handle_ast(file_args: FilePathArgs) -> Result<(), Box<dyn std::error::Error>> {
+    let file_data = read_to_string(file_args.file_path)?;
+
+    let tree = make_tree(&file_data)?;
+
+    println!("{:?}", tree);
+
+    Ok(())
+}
+
+fn main() -> Result<(), Box<dyn std::error::Error>> {
     // Parse CLI input from user
     let cli = Cli::parse();
 
     // Based on user input, run the appropriate function
     match cli.command {
         Commands::Tokens(file_args) => handle_tokens(file_args),
-        Commands::Ast(file_args) => println!(
-            "{:?}",
-            make_tree(&read_to_string(file_args.file_path).unwrap())
-        ),
+        Commands::Ast(file_args) => handle_ast(file_args),
         Commands::Json(json_args) => handle_json(json_args),
         Commands::Query(query_args) => handle_query(query_args),
     }
