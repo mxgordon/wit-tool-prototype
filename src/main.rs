@@ -60,6 +60,17 @@ impl Display for Commands {
     }
 }
 
+impl Display for SyntaxNode {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        writeln!(f, "Kind: {}", self.kind)?;
+        writeln!(f, "Text: {}", self.text)?;
+        for child in &self.children {
+            writeln!(f, "Child: {}", child)?;
+        }
+        Ok(())
+    }
+}
+
 fn handle_query(query_args: QueryArgs) -> Result<(), Box<dyn std::error::Error>> {
     let file_data = read_to_string(query_args.file_path)?;
 
@@ -91,21 +102,11 @@ fn handle_tokens(file_args: FilePathArgs) -> Result<(), Box<dyn std::error::Erro
 
     let tree = make_tree(&file_data)?;
 
-    // get root node of parsed tree
-    let root_node = tree.root_node();
+    // collect tree into SyntaxNode
+    let root = SyntaxNode::from_node(tree.root_node(), file_data.clone());
 
-    // create cursor to traverse tree
-    let mut cursor = root_node.walk();
-
-    //iterate over all named children of root node (only top-level)
-    for node in root_node.named_children(&mut cursor) {
-        // print node kind and text
-        println!(
-            "Token: {}, Text: {}",
-            node.kind(),
-            &file_data[node.byte_range()]
-        );
-    }
+    // pretty print using dislay impl
+    println!("{}", root);
 
     Ok(())
 }
